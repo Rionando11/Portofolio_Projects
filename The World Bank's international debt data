@@ -1,0 +1,93 @@
+/* The World Bank's international debt data
+It's not that we humans only take debts to manage our necessities. A country may also take debt to manage its economy. For example, infrastructure spending is one costly ingredient required for a country's citizens to lead comfortable lives. https://www.worldbank.org. The World Bank is the organization that provides debt to countries.
+In this notebook, we are going to analyze international debt data collected by The World Bank. The dataset contains information about the amount of debt (in USD) owed by developing countries across several categories. We are going to find the answers to questions like:
+
+- What is the total amount of debt that is owed by the countries listed in the dataset?
+- Which country owns the maximum amount of debt and what does that amount look like?
+- What is the average amount of debt owed by countries across different debt indicators?
+
+link dataset: https://drive.google.com/drive/folders/1TCH3e260A5iFuv6SmERUWhj3LytiqpvH?usp=sharing
+*/
+
+-- Inspect the international debt data.
+SELECT *
+FROM
+    international_debt
+LIMIT 10;
+
+-- Find the number of distinct countries.
+SELECT
+    COUNT(DISTINCT country_name) AS total_distinct_countries
+FROM
+    international_debt;
+
+-- Finding out the distinct debt indicators
+SELECT
+    DISTINCT indicator_code AS distinct_debt_indicators
+FROM
+    international_debt
+ORDER BY
+    distinct_debt_indicators;
+
+-- Totaling the amount of debt owed by the countries
+SELECT
+    ROUND(SUM(debt) / 1000000 , 2) AS total_debt
+FROM
+    international_debt;
+
+-- Country with the highest debt
+SELECT
+    country_name,
+    SUM(debt) AS total_debt
+FROM
+    international_debt
+GROUP BY 1
+ORDER BY 2 DESC
+LIMIT 1;
+
+-- Average amount of debt across indicators
+SELECT
+    indicator_code AS debt_indicator,
+    indicator_name,
+    AVG(debt) AS average_debt
+FROM
+    international_debt
+GROUP BY 1, 2
+ORDER BY 3 DESC
+LIMIT 10;
+
+-- The highest amount of principal repayments
+SELECT
+    country_name,
+    indicator_name
+FROM
+    international_debt
+WHERE
+    debt = (SELECT
+                 MAX(debt)
+             FROM
+                 international_debt
+             WHERE
+                 indicator_code = 'DT.AMT.DLXF.CD');
+
+-- The most common debt indicator
+SELECT
+    indicator_code,
+    COUNT(*) AS indicator_count
+FROM international_debt
+GROUP BY
+    1
+ORDER BY
+    2 DESC,
+    1 DESC
+LIMIT 20;
+
+-- Other viable debt issues and conclusion
+SELECT
+    country_name,
+    MAX(debt) AS maximum_debt
+FROM 
+    international_debt
+GROUP BY 1
+ORDER BY 2 DESC
+LIMIT 10;
