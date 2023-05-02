@@ -1,0 +1,121 @@
+/* When Was the Golden Age of Video Games?
+In this project, I will analyze video game critic and user scores and sales data for the top 400 video games released since 1977. I will search for the golden age of video games by identifying the release years that users and critics liked the most, and I will explore the business side of games by looking at game sales data.
+
+The search will involve combining data sets and comparing the results with set theory. You'll also filter, categorize and sort the data.
+
+Project tasks:
+
+1. The ten best-selling video games
+2. Missing review scores
+3. Years that video game critics loved
+4. Was 1982 really that great?
+5. Years that dropped off the critics' favorites list
+6. Years video game players loved
+7. Years that both players and critics loved
+8. Sales in the best video game years
+
+link dataset: https://drive.google.com/drive/folders/1TCH3e260A5iFuv6SmERUWhj3LytiqpvH?usp=sharing
+*/
+
+-- The ten best-selling video games
+SELECT *
+FROM 
+    game_sales
+ORDER BY 
+    games_sold DESC
+LIMIT 10;
+
+-- Missing review scores
+SELECT 
+    COUNT(*)
+FROM 
+    game_sales AS gs
+LEFT JOIN 
+    reviews AS r
+ON 
+    gs.game = r.game
+WHERE 
+    critic_score IS NULL AND user_score IS NULL;
+
+-- Years that video game critics loved
+SELECT 
+    year, 
+    ROUND(AVG(critic_score), 2) avg_critic_score
+FROM 
+    game_sales AS g
+JOIN 
+    reviews AS r
+ON 
+    g.game = r.game
+GROUP BY 1
+ORDER BY 2 DESC
+LIMIT 10;
+
+-- Was 1982 really that great?
+SELECT 
+    year,  
+    ROUND(AVG(critic_score), 2) avg_critic_score, 
+    COUNT(*) num_games
+FROM 
+    game_sales AS g
+JOIN 
+    reviews AS r
+ON 
+    g.game = r.game
+GROUP BY 1
+HAVING 
+    COUNT(*) > 4
+ORDER BY 2 DESC
+LIMIT 10;
+
+-- Years that dropped off the critics' favorites list
+SELECT 
+    year, 
+    avg_critic_score
+FROM 
+    top_critic_years
+EXCEPT
+SELECT 
+    year, 
+    avg_critic_score
+FROM 
+    top_critic_years_more_than_four_games
+ORDER BY 2 DESC;
+
+-- Years video game players loved
+SELECT 
+    gs.year, 
+    ROUND(AVG(r.user_score), 2) AS avg_user_score, 
+    COUNT(*) AS num_games
+FROM 
+    game_sales AS gs
+JOIN 
+    reviews AS r
+ON 
+    gs.game = r.game
+GROUP BY 1
+HAVING 
+    COUNT(*) > 4
+ORDER BY 2 DESC
+LIMIT 10;
+
+-- Years that both players and critics loved
+SELECT 
+    c.year
+FROM 
+    top_critic_years_more_than_four_games AS c
+JOIN 
+    top_user_years_more_than_four_games AS u
+ON 
+    c.year = u.year;
+
+-- Sales in the best video game years
+SELECT 
+    year, 
+    SUM(games_sold) AS total_games_sold
+FROM 
+    game_sales
+WHERE 
+    year IN (1998, 2002, 2008)
+GROUP BY 1
+ORDER BY 2 DESC;
