@@ -1,16 +1,17 @@
 /* The World Bank's international debt data
-It's not that we humans only take debts to manage our necessities. A country may also take debt to manage its economy. For example, infrastructure spending is one costly ingredient required for a country's citizens to lead comfortable lives. https://www.worldbank.org. The World Bank is the organization that provides debt to countries.
-In this notebook, we are going to analyze international debt data collected by The World Bank. The dataset contains information about the amount of debt (in USD) owed by developing countries across several categories. We are going to find the answers to questions:
+This is a project that I am working on from DataCamp. A country can go into debt to manage its economy. For example, infrastructure spending is one of the expensive ingredients necessary for citizens to live a comfortable life. https://www.worldbank.org. The World Bank is an organization that provides debt to countries.
 
-1. The World Bank's international debt data
-2. Finding the number of distinct countries
-3. Finding out the distinct debt indicators
-4. Totaling the amount of debt owed by the countries
-5. Country with the highest debt
-6. Average amount of debt across indicators
-7. The highest amount of principal repayments
-8. The most common debt indicator
-9. Other viable debt issues and conclusion
+In this project, we will analyze international debt data collected by the World Bank. This dataset contains information on the amount of debt (in USD) held by developing countries across several categories. We will find answers to several questions:
+
+1. World Bank international debt data
+2. Find the number of different countries
+3. Find different debt indicators
+4. Summing up the amount of debt held by these countries
+5. Countries with the highest debt
+6. Average amount of debt across all indicators
+7. Highest amount of principal repayments
+8. Most common debt indicator
+9. Other viable debt issues and conclusions
 
 link dataset: https://drive.google.com/drive/folders/1TCH3e260A5iFuv6SmERUWhj3LytiqpvH?usp=sharing
 */
