@@ -1,0 +1,166 @@
+/* Analyzing American Baby Name Trends 
+This is a project that I have completed and it was provided by DataCamp.
+
+What makes a name timeless or trendy? In this project, you will use data published by the US Social Security Administration for over a hundred years to understand baby name tastes in America.
+
+The ranking, clustering, merging, sorting, and pattern-matching skills you'll use in this project are broadly applicable: understanding changing tastes is a key competency for businesses as well as parents looking for baby names!
+
+Project tasks:
+
+1. Classic American names
+2. Timeless or trendy?
+3. Top-ranked female names since 1920
+4. Picking a baby name
+5. The Olivia expansion
+6. Many males with the same name
+7. Top male names over the years
+8. The most years at number one
+
+link dataset: https://drive.google.com/drive/folders/1TCH3e260A5iFuv6SmERUWhj3LytiqpvH?usp=sharing
+*/
+
+-- Classic American names
+SELECT 
+    first_name,
+    SUM(num)
+FROM
+    baby_names
+GROUP BY 1
+HAVING COUNT(DISTINCT year) =  101
+ORDER BY 2 DESC;
+
+-- Timeless or trendy?
+SELECT
+    first_name,
+    SUM(num),
+    CASE 
+        WHEN COUNT(first_name) > 80 THEN 'Classic'
+        WHEN COUNT(first_name) > 50 THEN 'Semi-classic'
+        WHEN COUNT(first_name) > 20 THEN 'Semi-trendy'
+        ELSE 'Trendy'
+    END AS popularity_type
+FROM
+    baby_names
+GROUP BY 1
+ORDER BY 1;
+
+-- Top-ranked female names since 1920
+SELECT
+    RANK() OVER(ORDER BY SUM(num) DESC) AS name_rank,
+    first_name,
+    SUM(num)
+FROM
+    baby_names
+WHERE
+    sex = 'F'
+GROUP BY 2
+LIMIT 10;
+
+-- Picking a baby name
+WITH cte AS (
+    SELECT 
+        first_name,
+        SUM(num)
+    FROM
+        baby_names
+    WHERE
+        sex = 'F' AND
+        year > 2015 AND
+        first_name LIKE '%a'
+    GROUP BY 1
+    ORDER BY 2 DESC
+)
+SELECT first_name
+FROM cte;
+
+-- The Olivia expansion
+SELECT
+    year,
+    first_name,
+    num,
+    SUM(num) OVER(ORDER BY year) AS cumulative_olivias
+FROM
+    baby_names
+WHERE
+    first_name = 'Olivia'
+ORDER BY 1;
+
+-- Many males with the same name
+SELECT
+    year,
+    MAX(num) AS max_num
+FROM
+    baby_names
+WHERE
+    sex = 'M'
+GROUP BY 1;
+
+-- Top male names over the years
+WITH max_babies AS (
+    SELECT
+        year,
+        MAX(num) AS max_num
+    FROM
+        baby_names
+    WHERE
+        sex = 'M'
+    GROUP BY 1
+)
+SELECT
+    bn.year,
+    bn.first_name,
+    bn.num
+FROM
+    baby_names AS bn
+JOIN
+    max_babies AS mb
+ON 
+    bn.year = mb.year AND
+    bn.num = mb.max_num
+WHERE
+    bn.sex = 'M'
+ORDER BY 1 DESC;
+
+-- The most years at number one
+WITH max_babies AS (
+    SELECT
+        year,
+        MAX(num) AS max_num
+    FROM
+        baby_names
+    WHERE
+        sex = 'M'
+    GROUP BY 1
+), top_name AS (
+    SELECT
+        bn.year,
+        bn.first_name,
+        bn.num
+    FROM
+        baby_names AS bn
+    JOIN
+        max_babies AS mb
+    ON 
+        bn.year = mb.year AND
+        bn.num = mb.max_num
+    WHERE
+        bn.sex = 'M'
+    ORDER BY 1 DESC
+)
+SELECT
+    first_name,
+    COUNT(year) AS count_top_name
+FROM
+    top_name
+GROUP BY 1
+ORDER BY 2 DESC;
+
+-- Other viable debt issues and conclusion
+SELECT
+    country_name,
+    MAX(debt) AS maximum_debt
+FROM 
+    international_debt
+GROUP BY 1
+ORDER BY 2 DESC
+LIMIT 10;
