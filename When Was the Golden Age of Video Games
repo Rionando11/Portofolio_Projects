@@ -1,4 +1,5 @@
 /* When Was the Golden Age of Video Games?
+This is a project that I have completed and it was provided by DataCamp.
 In this project, I will analyze video game critic and user scores and sales data for the top 400 video games released since 1977. I will search for the golden age of video games by identifying the release years that users and critics liked the most, and I will explore the business side of games by looking at game sales data.
 
 The search will involve combining data sets and comparing the results with set theory. You'll also filter, categorize and sort the data.
