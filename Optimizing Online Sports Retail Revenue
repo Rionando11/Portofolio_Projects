@@ -1,0 +1,196 @@
+/* Optimizing Online Sports Retail Revenue
+This project provided by DataCamp!
+
+As we know that the world of sports is much liked by people around the world. This makes sportswear a booming sector!
+
+In this project, I'll use my SQL skills to analyze product data for an online sports retail company.
+
+I'll be working with numeric, string, and timestamp data about website prices and earnings, ratings, reviews, descriptions, and traffic.
+
+I'll be using techniques like aggregation, cleaning, labeling, Common Table Expressions, and correlation to come up with recommendations on how a company can maximize revenue!
+Project tasks:
+
+1. Counting missing values
+2. Nike vs Adidas pricing
+3. Labeling price ranges
+4. Average discount by brand
+5. Correlation between revenue and reviews
+6. Ratings and reviews by product description length
+7. Reviews by month and brand
+8. Footwear product performance
+9. Clothing product performance
+
+link dataset: https://drive.google.com/drive/folders/1TCH3e260A5iFuv6SmERUWhj3LytiqpvH?usp=sharing
+*/
+
+-- Counting missing values
+SELECT
+    COUNT(i.*) AS total_rows,
+    COUNT(i.description) AS count_description,
+    COUNT(f.listing_price) AS count_listing_price,
+    COUNT(t.last_visited) AS count_last_visited
+FROM
+    info AS i
+JOIN
+    finance AS f
+ON 
+    i.product_id = f.product_id
+JOIN
+   traffic AS t
+ON 
+    f.product_id = t.product_id
+
+-- Price varies between Adidas and Nike products.
+SELECT
+    brand,
+    f.listing_price::INTEGER,
+    COUNT(f.*)
+FROM
+    brands AS b
+JOIN
+    finance AS f
+ON
+    b.product_id = f.product_id
+WHERE
+    listing_price > 0
+GROUP BY 1, 2
+ORDER BY 2 DESC;
+
+-- Labeling price ranges
+SELECT
+    b.brand,
+    COUNT(f.*),
+    SUM(f.revenue) AS total_revenue,
+    CASE 
+        WHEN listing_price < 42 THEN 'Budget'
+        WHEN listing_price >= 42 AND listing_price < 74 THEN 'Average'
+        WHEN listing_price >= 74 AND listing_price < 129 THEN 'Expensive'
+        ELSE 'Elite'
+    END AS price_category
+FROM
+    brands AS b
+JOIN
+    finance AS f
+ON
+    b.product_id = f.product_id
+WHERE
+    brand IS NOT NULL
+GROUP BY 1, 4
+ORDER BY 3 DESC;
+
+-- Average discount by brand
+SELECT
+    b.brand,
+    AVG(f.discount) * 100 AS average_discount
+FROM
+    brands AS b
+JOIN
+    finance AS f
+ON
+    b.product_id = f.product_id
+WHERE
+    brand IS NOT NULL
+GROUP BY 1;
+
+-- Correlation between revenue and reviews
+SELECT
+    corr(reviews, revenue) AS review_revenue_corr
+FROM
+    reviews AS r
+JOIN
+    finance AS f
+ON
+    r.product_id = f.product_id;
+
+-- Ratings and reviews by product description length
+SELECT
+    TRUNC(LENGTH(i.description), -2) AS description_length,
+    ROUND(AVG (r.rating::NUMERIC), 2) AS average_rating
+FROM
+    info AS i
+JOIN
+    reviews AS r
+ON
+    i.product_id = r.product_id
+WHERE
+    i.description IS NOT NULL
+GROUP BY 1
+ORDER BY 1;
+
+-- Reviews by month and brand
+SELECT
+    b.brand,
+    EXTRACT(MONTH FROM t.last_visited) AS month,
+    COUNT(r.*) AS num_reviews
+FROM
+    traffic AS t
+JOIN
+    reviews AS r
+ON
+    t.product_id = r.product_id
+JOIN
+    brands AS b
+ON
+    r.product_id = b.product_id
+WHERE
+    b.brand IS NOT NULL AND
+    t.last_visited IS NOT NULL
+GROUP BY 1, 2
+ORDER BY 1, 2;
+
+-- Footwear product performance
+WITH footwear AS (
+    SELECT
+        i.description,
+        f.revenue
+    FROM
+       info AS i
+    JOIN
+        finance AS f
+    ON
+        i.product_id = f.product_id
+    WHERE
+        i.description ILIKE '%shoe%' OR
+        i.description ILIKE '%trainer%' OR
+        i.description ILIKE '%foot%' AND
+        i.description IS NOT NULL
+)
+SELECT
+    COUNT(*) AS num_footwear_products,
+    PERCENTILE_DISC(0.5) WITHIN GROUP (ORDER BY revenue) AS median_footwear_revenue
+FROM
+    footwear;
+
+-- Clothing product performance
+WITH footwear AS (
+    SELECT
+        i.description,
+        f.revenue
+    FROM
+       info AS i
+    JOIN
+        finance AS f
+    ON
+        i.product_id = f.product_id
+    WHERE
+        i.description ILIKE '%shoe%' OR
+        i.description ILIKE '%trainer%' OR
+        i.description ILIKE '%foot%' AND
+        i.description IS NOT NULL
+)
+SELECT
+    COUNT(i.*) AS num_clothing_products,
+    PERCENTILE_DISC(0.5) WITHIN GROUP (ORDER BY f.revenue) AS median_clothing_revenue
+FROM
+    info AS i
+JOIN
+    finance AS f
+ON
+    i.product_id = f.product_id
+WHERE
+    i.description NOT IN (
+        SELECT
+            description
+        FROM
+            footwear
+        );
