@@ -1,0 +1,218 @@
+Exploratory Analysis and Dashboard for Railway Operations
+
+Business Background:
+National Rail provides essential business services to passenger train operators across England, Scotland, and Wales. In a dynamic transportation landscape, effective data-driven insights are crucial for optimizing route efficiency, maximizing revenue, enhancing customer satisfaction, and ensuring operational punctuality. 
+With the growing demand for efficient railway services and heightened competition from other modes of transportation, National Rail aims to leverage its data to improve service delivery and strategic decision-making.
+
+Problem Background:
+Despite the rich dataset available, National Rail faces challenges in understanding and optimizing their operational metrics. These challenges include:
+
+Identifying Popular Routes: Which routes are most frequently traveled, and how can these insights inform scheduling and resource allocation?
+Determining Peak Travel Times: Understanding peak travel periods can aid in better capacity management and scheduling.
+Analyzing Revenue Streams: How does revenue vary across different ticket types and classes, and how can this inform pricing strategies?
+Diagnosing On-Time Performance: Delays in railway services can significantly impact customer satisfaction and operational efficiency. Identifying the extent of delays and their contributing factors is crucial for improving service reliability.
+
+Analysis Goals:
+The primary goals of the exploratory analysis and dashboard creation are:
+- Identify the Most Popular Routes: Analyze travel patterns to uncover the most frequented routes and provide recommendations for optimizing route management.
+- Determine Peak Travel Times: Assess travel time distribution to identify peak travel hours, aiding in better scheduling and resource planning.
+- Analyze Revenue from Different Ticket Types & Classes: Evaluate revenue contributions from various ticket categories and classes to inform pricing and marketing strategies.
+- Diagnose On-Time Performance and Contributing Factors: Investigate punctuality issues, understand delay reasons, and suggest measures to improve on-time performance.
+
+Scope of Analysis:
+- Data Cleaning: Ensure data quality by handling missing values, standardizing time formats, and calculating derived metrics such as delay duration.
+- Exploratory Data Analysis (EDA): Conduct in-depth exploration to uncover patterns and insights related to travel routes, times, ticket types, and punctuality.
+- Dashboard Creation: Develop an interactive dashboard that provides visual insights into the most popular routes, peak travel times, revenue analysis, and punctuality performance.
+- Actionable Recommendations: Based on the analysis, provide actionable recommendations to enhance route efficiency, optimize scheduling, maximize revenue, and improve service reliability.
+
+Link to dataset: https://mavenanalytics.io/challenges/maven-rail-challenge/08941141-d23f-4cc9-93a3-4c25ed06e1c3
+
+MySQL Query:
+
+# Create railway Table
+CREATE TABLE railway (
+    transaction_id CHAR(36) PRIMARY KEY,
+    date_of_purchase DATE,
+    time_of_purchase TIME,
+    purchase_type VARCHAR(50),
+    payment_method VARCHAR(50),
+    railcard VARCHAR(50),
+    ticket_class VARCHAR(50),
+    ticket_type VARCHAR(50),
+    price FLOAT,
+    departure_station VARCHAR(100),
+    arrival_destination VARCHAR(100),
+    date_of_journey DATE,
+    departure_time TIME,
+    arrival_time TIME,
+    actual_arrival_time TIME,
+    journey_status VARCHAR(50),
+    reason_for_delay VARCHAR(255),
+    refund_request VARCHAR(50),
+    delay_duration FLOAT
+);
+
+# Load Railway Dataset 
+LOAD DATA INFILE 'C:/ProgramData/MySQL/MySQL Server 8.0/Uploads/railway2.csv'
+INTO TABLE railway
+FIELDS TERMINATED BY ','
+IGNORE 1 LINES;
+
+# Check Dataset
+SELECT
+	*
+FROM
+	railway;
+
+# Analysis
+
+# 1. What are the most common reasons for delays?
+SELECT
+	reason_for_delay,
+    COUNT(*) AS delay_count
+FROM
+	railway
+WHERE
+	reason_for_delay <> 'No Delay'
+GROUP BY 1
+ORDER BY 2 DESC;
+
+# 2. Which payment methods are most frequently used?
+SELECT
+	payment_method,
+    COUNT(*) AS payment_count
+FROM
+	railway
+GROUP BY 1
+ORDER BY 2 DESC;
+
+# 3. How does ticket class affect the likelihood of requesting a refund?
+SELECT
+	ticket_class,
+    COUNT(*) AS refund_count
+FROM
+	railway
+WHERE
+	refund_request = 'Yes'
+GROUP BY 1
+ORDER BY 2 DESC;
+
+# 4. What is the average price paid for different ticket types?
+SELECT
+	ticket_type,
+    ROUND(AVG(price), 2) AS avg_price
+FROM
+	railway
+GROUP BY 1
+ORDER BY 2 DESC;
+
+# 5. How do delay durations vary across different departure stations?
+SELECT
+	departure_station,
+    ROUND(AVG(delay_duration), 2) AS avg_delay_duration
+FROM
+	railway
+WHERE
+	delay_duration <> 0
+GROUP BY 1
+ORDER BY 2 DESC;
+
+# 6. What is the relationship between railcard usage and ticket price?
+SELECT
+	railcard,
+    ROUND(AVG(price), 2) AS avg_price
+FROM
+	railway
+GROUP BY 1
+ORDER BY 2 DESC;
+
+# 7. Which ticket classes and types are most prone to delays?
+SELECT
+	ticket_class,
+    ticket_type,
+    ROUND(AVG(delay_duration), 2) AS avg_delay_duration
+FROM
+	railway
+WHERE
+	delay_duration <> 0
+GROUP BY 1, 2
+ORDER BY 3 DESC;
+
+# Add New Table : Purchase_day
+ALTER TABLE railway 
+ADD COLUMN purchase_day VARCHAR(10);
+# Update The Column With The Day Name
+UPDATE railway
+SET purchase_day = DATE_FORMAT(date_of_purchase, '%W');
+
+# Add New Table : Journey_Day table
+ALTER TABLE railway 
+ADD COLUMN journey_day VARCHAR(10);
+# Update The Column With The Day Name
+UPDATE railway
+SET journey_day = DATE_FORMAT(date_of_journey, '%W');
+
+# Verify changes
+SELECT
+	*
+FROM
+	railway;
+
+# 8. How do purchasing behaviors differ by day of the week?
+SELECT
+	purchase_day AS day_of_week,
+    COUNT(*) AS purchase_count
+FROM
+	railway
+GROUP BY 1
+ORDER BY 2 DESC;
+
+# 9. what is average delay for journey status?
+SELECT
+	journey_status,
+    ROUND(AVG(delay_duration), 2) AS avg_delay_duration
+FROM
+	railway
+WHERE
+	delay_duration <> 0
+GROUP BY 1
+ORDER BY 2 DESC;
+
+# 10. What are the busiest routes (in terms of number of transactions)?
+SELECT
+	departure_station,
+    arrival_destination,
+    COUNT(transaction_id) AS num_of_trips
+FROM
+	railway
+GROUP BY 1, 2
+ORDER BY 3 DESC;
+
+# 11. Determine the Peak Travel Time
+SELECT
+	HOUR(departure_time) AS travel_time,
+    COUNT(transaction_id) AS num_of_trips
+FROM
+	railway
+GROUP BY 1
+ORDER BY 2 DESC;
+
+# 12. Revenue Analysis of Different Ticket Types & Classes
+SELECT
+	ticket_type,
+    ticket_class,
+    SUM(price) AS total_revenue
+FROM
+	railway
+GROUP BY 1, 2
+ORDER BY 3 DESC;
+
+# 13. Total Travel and Delay
+SELECT
+	journey_status,
+    COUNT(*) AS num_of_journeys,
+    ROUND(AVG(delay_duration),2) AS avg_delay_duration
+FROM
+	railway
+GROUP BY 1
+ORDER BY 2 DESC;
